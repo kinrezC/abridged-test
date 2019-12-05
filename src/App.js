@@ -1,5 +1,4 @@
-import React from "react";
-import logo from "./logo.svg";
+import React, { useState, useEffect } from "react";
 import "./App.css";
 // Inject into import block
 import {
@@ -7,31 +6,48 @@ import {
   SdkEnvironmentNames,
   createSdk
 } from "@archanova/sdk";
-
-// Select the ethereum network
-let sdkEnv = getSdkEnvironment(SdkEnvironmentNames.Kovan); // kovan env by default
-// Create SDK instance and store locally
-const sdk = new createSdk(sdkEnv.setConfig("storageAdapter", localStorage));
-// Initialize instance
-sdk.initialize().then(console.log(sdk));
+import { TerminalHttpProvider } from "@terminal-packages/sdk";
+import Web3 from "web3";
 
 function App() {
+  const [web3, setWeb3] = useState(null);
+  const [aSdk, setSdk] = useState(null);
+
+  useEffect(() => {
+    initSdk();
+  }, []);
+
+  const initSdk = async () => {
+    // Select the ethereum network
+    let sdkEnv = getSdkEnvironment(SdkEnvironmentNames.Kovan); // kovan env by default
+    // Create SDK instance and store locally
+    const sdk = new createSdk(sdkEnv.setConfig("storageAdapter", localStorage));
+    // Initialize instance
+    await sdk.initialize();
+    setSdk(sdk);
+  };
+
+  const initWeb3 = () => {
+    setWeb3(
+      new Web3(
+        new TerminalHttpProvider({
+          customHttpProvider: aSdk.eth,
+          source: "Abridged",
+          apiKey: "rt92QzoCp2/KdqHjBgbccA==",
+          projectId: "geParyjQMPjpqXxO"
+        })
+      )
+    );
+    console.log(web3);
+    console.log(aSdk);
+  };
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div>
+      <button onClick={() => initWeb3()}>Initialize Web3</button>
+      <button onClick={() => aSdk.eth.blockNumber().then(console.log)}>
+        Deploy Account
+      </button>
     </div>
   );
 }
